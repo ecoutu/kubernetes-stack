@@ -1,0 +1,31 @@
+# Development Dockerfile with all tools
+FROM golang:1.24-alpine
+
+# Install Terraform and tools
+RUN apk add --no-cache \
+    bash \
+    git \
+    make \
+    curl \
+    wget \
+    unzip \
+    ca-certificates \
+    aws-cli \
+    python3 \
+    py3-pip
+
+# Install Terraform
+ARG TERRAFORM_VERSION=1.6.5
+RUN wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
+    unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
+    mv terraform /usr/local/bin/ && \
+    rm terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+
+# Install tflint (optional linter)
+RUN wget -O- https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+
+# Set working directory
+WORKDIR /workspace
+
+# Default command
+CMD ["/bin/bash"]

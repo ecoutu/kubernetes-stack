@@ -1,0 +1,81 @@
+version: "3.8"
+
+services:
+  terraform:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: terraform-stack
+    working_dir: /workspace
+    volumes:
+      # Mount current directory
+      - .:/workspace
+      # Mount AWS credentials (read-only)
+      - ~/.aws:/root/.aws:ro
+      # Persist Terraform plugins
+      - terraform-plugins:/root/.terraform.d/plugins
+      # Persist migration state
+      - migration-state:/workspace/migrations
+    environment:
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_PROFILE=${AWS_PROFILE:-default}
+      - TF_LOG=${TF_LOG:-}
+      - TF_LOG_PATH=${TF_LOG_PATH:-}
+    stdin_open: true
+    tty: true
+    networks:
+      - terraform-net
+
+  # Development container with hot-reload
+  terraform-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: terraform-stack-dev
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+      - ~/.aws:/root/.aws:ro
+      - terraform-plugins:/root/.terraform.d/plugins
+      - go-cache:/go/pkg
+    environment:
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_PROFILE=${AWS_PROFILE:-default}
+      - TF_LOG=${TF_LOG:-}
+      - CGO_ENABLED=0
+    stdin_open: true
+    tty: true
+    networks:
+      - terraform-net
+    command: /bin/bash
+
+  # Migration runner (for CI/CD)
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: terraform-migrate
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+      - ~/.aws:/root/.aws:ro
+    environment:
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_PROFILE=${AWS_PROFILE:-default}
+    networks:
+      - terraform-net
+    command: ["status"]
+    profiles:
+      - tools
+
+volumes:
+  terraform-plugins:
+    driver: local
+  migration-state:
+    driver: local
+  go-cache:
+    driver: local
+
+networks:
+  terraform-net:
+    driver: bridge

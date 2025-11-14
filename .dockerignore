@@ -1,0 +1,42 @@
+# Git
+.gitignore
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+*.tfstate.backup_*
+
+# Migration artifacts
+migrations/migrate
+migrations/.migration_state.json
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation (not needed in container)
+*.md
+!migrations/README.md
+
+# Backups
+*.backup
+*.bak
+
+# Logs
+*.log
+crash.log
+crash.*.log
+
+# Temporary files
+tmp/
+temp/
