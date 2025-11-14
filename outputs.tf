@@ -1,0 +1,91 @@
+# Output values from your Terraform configuration
+
+output "vpc_id" {
+  description = "ID of the VPC"
+  value       = module.vpc.vpc_id
+}
+
+output "vpc_cidr" {
+  description = "CIDR block of the VPC"
+  value       = module.vpc.vpc_cidr
+}
+
+output "public_subnet_ids" {
+  description = "IDs of public subnets"
+  value       = module.vpc.public_subnet_ids
+}
+
+output "private_subnet_ids" {
+  description = "IDs of private subnets"
+  value       = module.vpc.private_subnet_ids
+}
+
+output "nat_gateway_ids" {
+  description = "IDs of NAT Gateways"
+  value       = module.vpc.nat_gateway_ids
+}
+
+output "nat_gateway_ips" {
+  description = "Public IPs of NAT Gateways"
+  value       = module.vpc.nat_gateway_ips
+}
+
+output "internet_gateway_id" {
+  description = "ID of the Internet Gateway"
+  value       = module.vpc.internet_gateway_id
+}
+
+output "availability_zones" {
+  description = "List of availability zones used"
+  value       = module.vpc.availability_zones
+}
+
+# IAM User Outputs
+output "user_ecoutu_arn" {
+  description = "ARN of IAM user ecoutu"
+  value       = module.iam.user_arn
+}
+
+output "user_ecoutu_name" {
+  description = "Name of IAM user ecoutu"
+  value       = module.iam.user_name
+}
+
+output "user_ecoutu_access_key_id" {
+  description = "Access key ID for user ecoutu"
+  value       = module.iam.user_access_key_id
+  sensitive   = true
+}
+
+output "user_ecoutu_access_key_secret" {
+  description = "Access key secret for user ecoutu"
+  value       = module.iam.user_access_key_secret
+  sensitive   = true
+}
+
+# IAM Role Outputs
+output "admin_role_arn" {
+  description = "ARN of the administrator role"
+  value       = module.iam.admin_role_arn
+}
+
+output "admin_role_name" {
+  description = "Name of the administrator role"
+  value       = module.iam.admin_role_name
+}
+
+output "admin_role_instance_profile_arn" {
+  description = "ARN of the administrator role instance profile"
+  value       = module.iam.admin_instance_profile_arn
+}
+
+output "admin_role_instance_profile_name" {
+  description = "Name of the administrator role instance profile"
+  value       = module.iam.admin_instance_profile_name
+}
+
+# Account Alias Output
+output "account_alias" {
+  description = "AWS account alias for console sign-in"
+  value       = module.iam.account_alias
+}
