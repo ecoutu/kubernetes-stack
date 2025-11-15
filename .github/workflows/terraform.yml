@@ -7,6 +7,12 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Required permissions for OIDC authentication
+permissions:
+  id-token: write   # Required to request OIDC token
+  contents: read    # Required to checkout repository
+  pull-requests: write  # Required to comment on PRs
+
 env:
   AWS_REGION: us-east-1
   TF_VERSION: 1.6.5
@@ -93,12 +99,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS Credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-Plan-${{ github.run_id }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -166,12 +172,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS Credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-Apply-${{ github.run_id }}
+
+      - name: Verify AWS Identity
+        run: |
+          echo "=== AWS Caller Identity ==="
+          aws sts get-caller-identity
+          echo ""
+          echo "Assumed Role ARN:"
+          aws sts get-caller-identity --query Arn --output text
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
