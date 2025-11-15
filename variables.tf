@@ -35,3 +35,29 @@ variable "enable_nat_gateway" {
   type        = bool
   default     = true
 }
+
+# GitHub OIDC Configuration
+variable "github_org" {
+  description = "GitHub organization name"
+  type        = string
+  default     = "ecoutu"
+}
+
+variable "github_repo" {
+  description = "GitHub repository name"
+  type        = string
+  default     = "terraform-stack"
+}
+
+variable "github_branches" {
+  description = "List of GitHub branches allowed to assume the role"
+  type        = list(string)
+  default     = ["main", "develop"]
+}
+
+variable "github_token" {
+  description = "GitHub personal access token for managing repository secrets (leave empty to skip)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}

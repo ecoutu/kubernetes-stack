@@ -89,3 +89,38 @@ output "account_alias" {
   description = "AWS account alias for console sign-in"
   value       = module.iam.account_alias
 }
+
+# GitHub Actions OIDC Outputs
+output "github_actions_role_arn" {
+  description = "ARN of the GitHub Actions OIDC role"
+  value       = module.github_actions_role.role_arn
+}
+
+output "github_actions_role_name" {
+  description = "Name of the GitHub Actions OIDC role"
+  value       = module.github_actions_role.role_name
+}
+
+output "github_oidc_provider_arn" {
+  description = "ARN of the GitHub OIDC provider"
+  value       = module.github_actions_role.oidc_provider_arn
+}
+
+# GitHub Secrets Management Outputs
+output "github_secrets_configured" {
+  description = "Status of GitHub secrets configuration"
+  value       = "GitHub secrets configured for ${var.github_org}/${var.github_repo}"
+  sensitive   = true
+}
+
+output "github_secrets_list" {
+  description = "List of secrets configured in GitHub"
+  value       = module.github_secrets.secrets_configured
+  sensitive   = true
+}
+
+output "github_variables_list" {
+  description = "List of variables configured in GitHub"
+  value       = module.github_secrets.variables_configured
+  sensitive   = true
+}

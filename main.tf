@@ -8,6 +8,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    github = {
+      source  = "integrations/github"
+      version = "6.8.1"
+    }
   }
 }
 
@@ -20,6 +24,10 @@ provider "aws" {
       ManagedBy   = "Terraform"
     }
   }
+}
+
+provider "github" {
+  token = var.github_token
 }
 
 # VPC Module
@@ -71,4 +79,78 @@ module "iam" {
     Environment = var.environment
     Project     = var.project_name
   }
+}
+
+# GitHub Actions OIDC Role
+module "github_actions_role" {
+  source = "./modules/github-oidc-role"
+
+  role_name       = "GitHubActionsTerraformRole"
+  github_org      = var.github_org
+  github_repo     = var.github_repo
+  github_branches = var.github_branches
+
+  # Grant Terraform deployment permissions
+  inline_policies = {
+    TerraformDeployment = jsonencode({
+      Version = "2012-10-17"
+      Statement = [
+        {
+          Sid    = "TerraformStateAccess"
+          Effect = "Allow"
+          Action = [
+            "s3:ListBucket",
+            "s3:GetObject",
+            "s3:PutObject",
+            "s3:DeleteObject"
+          ]
+          Resource = [
+            "arn:aws:s3:::terraform-state-*",
+            "arn:aws:s3:::terraform-state-*/*"
+          ]
+        },
+        {
+          Sid    = "TerraformStateLocking"
+          Effect = "Allow"
+          Action = [
+            "dynamodb:GetItem",
+            "dynamodb:PutItem",
+            "dynamodb:DeleteItem"
+          ]
+          Resource = "arn:aws:dynamodb:*:*:table/terraform-state-lock*"
+        },
+        {
+          Sid    = "TerraformResourceManagement"
+          Effect = "Allow"
+          Action = [
+            "ec2:*",
+            "vpc:*",
+            "iam:*",
+            "s3:*",
+            "cloudwatch:*",
+            "logs:*"
+          ]
+          Resource = "*"
+        }
+      ]
+    })
+  }
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
+    Purpose     = "GitHub Actions CI/CD"
+  }
+}
+
+# GitHub Secrets Configuration
+# Automatically sets AWS_ROLE_TO_ASSUME and AWS_REGION in repository
+module "github_secrets" {
+  source = "./modules/github-secrets"
+  # count  = var.github_token != "" ? 1 : 0
+
+  github_token    = var.github_token
+  repository_name = "${var.github_org}/${var.github_repo}"
+  aws_role_arn    = module.github_actions_role.role_arn
+  aws_region      = var.aws_region
 }
