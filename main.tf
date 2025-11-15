@@ -13,6 +13,14 @@ terraform {
       version = "6.8.1"
     }
   }
+
+  backend "s3" {
+    bucket         = "ecoutu-terraform-stack-state"
+    key            = "terraform.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "ecoutu-terraform-stack-state-lock"
+    encrypt        = true
+  }
 }
 
 provider "aws" {
@@ -28,6 +36,24 @@ provider "aws" {
 
 provider "github" {
   token = var.github_token
+}
+
+# Terraform Backend Resources
+# Creates S3 bucket and DynamoDB table for remote state
+module "terraform_backend" {
+  source = "./modules/terraform-backend"
+  count  = var.enable_remote_state ? 1 : 0
+
+  bucket_name         = var.terraform_state_bucket
+  dynamodb_table_name = "${var.terraform_state_bucket}-lock"
+  enable_versioning   = true
+  enable_encryption   = true
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
+    Purpose     = "Terraform State Backend"
+  }
 }
 
 # VPC Module
@@ -102,11 +128,12 @@ module "github_actions_role" {
             "s3:ListBucket",
             "s3:GetObject",
             "s3:PutObject",
-            "s3:DeleteObject"
+            "s3:DeleteObject",
+            "s3:GetBucketVersioning"
           ]
           Resource = [
-            "arn:aws:s3:::terraform-state-*",
-            "arn:aws:s3:::terraform-state-*/*"
+            "arn:aws:s3:::${var.terraform_state_bucket}",
+            "arn:aws:s3:::${var.terraform_state_bucket}/*"
           ]
         },
         {
@@ -115,9 +142,10 @@ module "github_actions_role" {
           Action = [
             "dynamodb:GetItem",
             "dynamodb:PutItem",
-            "dynamodb:DeleteItem"
+            "dynamodb:DeleteItem",
+            "dynamodb:DescribeTable"
           ]
-          Resource = "arn:aws:dynamodb:*:*:table/terraform-state-lock*"
+          Resource = "arn:aws:dynamodb:${var.aws_region}:*:table/${var.terraform_state_bucket}-lock"
         },
         {
           Sid    = "TerraformResourceManagement"
@@ -128,7 +156,8 @@ module "github_actions_role" {
             "iam:*",
             "s3:*",
             "cloudwatch:*",
-            "logs:*"
+            "logs:*",
+            "dynamodb:*"
           ]
           Resource = "*"
         }

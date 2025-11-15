@@ -61,3 +61,16 @@ variable "github_token" {
   sensitive   = true
   default     = ""
 }
+
+# Terraform Backend Configuration
+variable "terraform_state_bucket" {
+  description = "Name of the S3 bucket for Terraform state"
+  type        = string
+  default     = ""
+}
+
+variable "enable_remote_state" {
+  description = "Enable remote state backend (S3 + DynamoDB)"
+  type        = bool
+  default     = false
+}

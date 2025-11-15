@@ -124,3 +124,20 @@ output "github_variables_list" {
   value       = module.github_secrets.variables_configured
   sensitive   = true
 }
+
+# Terraform Backend Outputs
+output "terraform_state_bucket" {
+  description = "S3 bucket name for Terraform state"
+  value       = var.enable_remote_state ? module.terraform_backend[0].s3_bucket_id : "Not configured"
+}
+
+output "terraform_state_lock_table" {
+  description = "DynamoDB table name for state locking"
+  value       = var.enable_remote_state ? module.terraform_backend[0].dynamodb_table_name : "Not configured"
+}
+
+output "backend_config" {
+  description = "Backend configuration for terraform block"
+  value       = var.enable_remote_state ? module.terraform_backend[0].backend_config : null
+  sensitive   = false
+}
