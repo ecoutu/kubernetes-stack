@@ -1,7 +1,7 @@
 # Main Terraform configuration file
 
 terraform {
-  required_version = ">= 1.0"
+  required_version = ">= 1.13.5"
 
   required_providers {
     aws = {
@@ -10,7 +10,7 @@ terraform {
     }
     github = {
       source  = "integrations/github"
-      version = "6.8.1"
+      version = "~> 6.8"
     }
   }
 
@@ -174,6 +174,7 @@ module "github_actions_role" {
 
 # GitHub Secrets Configuration
 # Automatically sets AWS_ROLE_TO_ASSUME and AWS_REGION in repository
+# Also sets all terraform.tfvars variables as GitHub secrets/variables
 module "github_secrets" {
   source = "./modules/github-secrets"
   # count  = var.github_token != "" ? 1 : 0
@@ -182,4 +183,31 @@ module "github_secrets" {
   repository_name = "${var.github_org}/${var.github_repo}"
   aws_role_arn    = module.github_actions_role.role_arn
   aws_region      = var.aws_region
+
+  # Set all terraform.tfvars variables as GitHub secrets/variables
+  additional_secrets = merge(
+    var.github_secrets,
+    {
+      # Sensitive values as secrets
+      "TF_VAR_github_token" = var.github_token
+    }
+  )
+
+  additional_variables = merge(
+    var.github_variables,
+    {
+      # Non-sensitive values as variables
+      "TF_VAR_aws_region"             = var.aws_region
+      "TF_VAR_environment"            = var.environment
+      "TF_VAR_project_name"           = var.project_name
+      "TF_VAR_vpc_cidr"               = var.vpc_cidr
+      "TF_VAR_az_count"               = tostring(var.az_count)
+      "TF_VAR_enable_nat_gateway"     = tostring(var.enable_nat_gateway)
+      "TF_VAR_github_org"             = var.github_org
+      "TF_VAR_github_repo"            = var.github_repo
+      "TF_VAR_github_branches"        = jsonencode(var.github_branches)
+      "TF_VAR_enable_remote_state"    = tostring(var.enable_remote_state)
+      "TF_VAR_terraform_state_bucket" = var.terraform_state_bucket
+    }
+  )
 }

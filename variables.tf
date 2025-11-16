@@ -74,3 +74,17 @@ variable "enable_remote_state" {
   type        = bool
   default     = false
 }
+
+# GitHub Secrets and Variables
+variable "github_secrets" {
+  description = "Additional GitHub Actions secrets to set in the repository"
+  type        = map(string)
+  sensitive   = true
+  default     = {}
+}
+
+variable "github_variables" {
+  description = "Additional GitHub Actions variables to set in the repository"
+  type        = map(string)
+  default     = {}
+}

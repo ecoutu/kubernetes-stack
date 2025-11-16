@@ -15,7 +15,7 @@ permissions:
 
 env:
   AWS_REGION: us-east-1
-  TF_VERSION: 1.6.5
+  TF_VERSION: 1.13.5
 
 jobs:
   validate:
@@ -133,6 +133,19 @@ jobs:
         id: plan
         run: terraform plan -no-color -out=tfplan
         continue-on-error: true
+        env:
+          TF_VAR_aws_region: ${{ vars.TF_VAR_aws_region }}
+          TF_VAR_environment: ${{ vars.TF_VAR_environment }}
+          TF_VAR_project_name: ${{ vars.TF_VAR_project_name }}
+          TF_VAR_vpc_cidr: ${{ vars.TF_VAR_vpc_cidr }}
+          TF_VAR_az_count: ${{ vars.TF_VAR_az_count }}
+          TF_VAR_enable_nat_gateway: ${{ vars.TF_VAR_enable_nat_gateway }}
+          TF_VAR_github_org: ${{ vars.TF_VAR_github_org }}
+          TF_VAR_github_repo: ${{ vars.TF_VAR_github_repo }}
+          TF_VAR_github_branches: ${{ vars.TF_VAR_github_branches }}
+          TF_VAR_enable_remote_state: ${{ vars.TF_VAR_enable_remote_state }}
+          TF_VAR_terraform_state_bucket: ${{ vars.TF_VAR_terraform_state_bucket }}
+          TF_VAR_github_token: ${{ secrets.TF_VAR_github_token }}
 
       - name: Update Pull Request
         uses: actions/github-script@v7
@@ -215,6 +228,19 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
+        env:
+          TF_VAR_aws_region: ${{ vars.TF_VAR_aws_region }}
+          TF_VAR_environment: ${{ vars.TF_VAR_environment }}
+          TF_VAR_project_name: ${{ vars.TF_VAR_project_name }}
+          TF_VAR_vpc_cidr: ${{ vars.TF_VAR_vpc_cidr }}
+          TF_VAR_az_count: ${{ vars.TF_VAR_az_count }}
+          TF_VAR_enable_nat_gateway: ${{ vars.TF_VAR_enable_nat_gateway }}
+          TF_VAR_github_org: ${{ vars.TF_VAR_github_org }}
+          TF_VAR_github_repo: ${{ vars.TF_VAR_github_repo }}
+          TF_VAR_github_branches: ${{ vars.TF_VAR_github_branches }}
+          TF_VAR_enable_remote_state: ${{ vars.TF_VAR_enable_remote_state }}
+          TF_VAR_terraform_state_bucket: ${{ vars.TF_VAR_terraform_state_bucket }}
+          TF_VAR_github_token: ${{ secrets.TF_VAR_github_token }}
 
       - name: Comment on Commit
         uses: actions/github-script@v7
