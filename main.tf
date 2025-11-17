@@ -15,11 +15,11 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "ecoutu-terraform-stack-state"
-    key            = "terraform.tfstate"
-    region         = "us-east-1"
-    dynamodb_table = "ecoutu-terraform-stack-state-lock"
-    encrypt        = true
+    bucket       = "ecoutu-terraform-stack-state"
+    key          = "terraform.tfstate"
+    region       = "us-east-1"
+    use_lockfile = true
+    encrypt      = true
   }
 }
 
