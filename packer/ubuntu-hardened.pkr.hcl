@@ -345,7 +345,6 @@ build {
   provisioner "shell" {
     inline = [
       "echo 'Installing Helm...'",
-      "curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash",
       "HELM_VERSION=$(curl -s https://api.github.com/repos/helm/helm/releases/latest | grep tag_name | cut -d '\"' -f 4)",
       "curl -LO https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz",
       "curl -LO https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz.sha256sum",
