@@ -131,7 +131,6 @@ build {
       "sudo sed -i 's/#ClientAliveCountMax 3/ClientAliveCountMax 2/' /etc/ssh/sshd_config",
       "sudo sed -i 's/#MaxSessions 10/MaxSessions 2/' /etc/ssh/sshd_config",
       "echo 'AllowUsers ecoutu' | sudo tee -a /etc/ssh/sshd_config",
-      "echo 'Protocol 2' | sudo tee -a /etc/ssh/sshd_config",
       "sudo sshd -t" # Test SSH config
     ]
   }
