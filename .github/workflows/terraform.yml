@@ -99,6 +99,9 @@ jobs:
       id-token: write
       contents: read
       pull-requests: write
+    concurrency:
+      group: ${{ github.ref }} # This creates a concurrency group based on the branch name
+      cancel-in-progress: true # This cancels any in-progress runs in the same group
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -188,6 +191,9 @@ jobs:
     permissions:
       id-token: write
       contents: read
+    concurrency:
+      group: ${{ github.ref }} # This creates a concurrency group based on the branch name
+      cancel-in-progress: true # This cancels any in-progress runs in the same group
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -303,6 +309,9 @@ jobs:
     permissions:
       id-token: write
       contents: write
+    concurrency:
+      group: ${{ github.ref }} # This creates a concurrency group based on the branch name
+      cancel-in-progress: true # This cancels any in-progress runs in the same group
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
