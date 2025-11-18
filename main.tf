@@ -205,7 +205,8 @@ module "github_actions_role" {
             "s3:*",
             "cloudwatch:*",
             "logs:*",
-            "dynamodb:*"
+            "dynamodb:*",
+            "route53:*"
           ]
           Resource = "*"
         }
