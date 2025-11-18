@@ -101,6 +101,11 @@ jobs:
         run: |
           cd packer
           packer build ubuntu-hardened.pkr.hcl
+        env:
+          PKR_VAR_aws_region: ${{ vars.PKR_VAR_aws_region }}
+          PKR_VAR_instance_type: ${{ vars.PKR_VAR_instance_type }}
+          PKR_VAR_ami_name_prefix: ${{ vars.PKR_VAR_ami_name_prefix }}
+          PKR_VAR_ssh_public_key: ${{ secrets.TF_VAR_ssh_public_key }}
 
       - name: Upload Packer Manifest
         uses: actions/upload-artifact@v4
