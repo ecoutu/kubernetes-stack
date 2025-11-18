@@ -4,7 +4,7 @@ This directory contains Packer templates for building hardened Ubuntu AMIs.
 
 ## Overview
 
-The `ubuntu-hardened.pkr.hcl` template creates a security-hardened Ubuntu 22.04 AMI with:
+The `ubuntu-hardened.pkr.hcl` template creates a security-hardened Ubuntu 24.04 AMI with:
 
 - **Custom User**: Creates `ecoutu` user with sudo access
 - **SSH Hardening**: Disables password auth, root login, configures secure defaults
