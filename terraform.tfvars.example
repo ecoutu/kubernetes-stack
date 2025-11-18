@@ -1,0 +1,48 @@
+# Terraform Variables Example
+# Copy this file to terraform.tfvars and customize the values
+
+# AWS Configuration
+aws_region   = "us-east-1"
+environment  = "dev"
+project_name = "my-project"
+
+# VPC Configuration
+vpc_cidr           = "10.0.0.0/16"
+az_count           = 2
+enable_nat_gateway = true
+
+# GitHub OIDC Configuration
+github_org      = "your-github-org"
+github_repo     = "your-repo-name"
+github_branches = ["main", "develop"]
+
+# GitHub Token (optional - leave empty to skip GitHub secrets configuration)
+# Requires 'repo' and 'admin:repo_hook' scopes
+github_token = ""
+
+# Terraform Backend Configuration (optional)
+# Leave empty if using local state or if backend is already configured
+terraform_state_bucket = ""
+enable_remote_state    = false
+
+# EC2 Configuration
+minikube_instance_type = "t3.small"
+
+# Security Configuration
+# WARNING: Default allows access from anywhere (0.0.0.0/0)
+# Restrict these to your IP address or VPN CIDR for production
+allowed_ssh_cidr_blocks     = ["0.0.0.0/0"]
+allowed_k8s_api_cidr_blocks = ["0.0.0.0/0"]
+
+# Route53 Configuration
+domain_name = "linklayer.ca"
+
+# Additional GitHub Secrets (optional)
+# github_secrets = {
+#   "CUSTOM_SECRET" = "secret-value"
+# }
+
+# Additional GitHub Variables (optional)
+# github_variables = {
+#   "CUSTOM_VAR" = "variable-value"
+# }
