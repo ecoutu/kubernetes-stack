@@ -329,7 +329,7 @@ build {
       "RemainAfterExit=yes",
       "User=ecoutu",
       "Group=ecoutu",
-      "ExecStart=/usr/local/bin/minikube start --driver=docker --apiserver-ips=127.0.0.1",
+      "ExecStart=/usr/local/bin/minikube start --driver=docker --listen-address=127.0.0.1 --apiserver-ips=127.0.0.1",
       "ExecStop=/usr/local/bin/minikube stop",
       "StandardOutput=journal",
       "",

@@ -1,4 +1,12 @@
 {
   "makefile.configureOnOpen": false,
-  "conventionalCommits.scopes": ["terraform", "migrations", "docker", "cicd", "workflow", "github"]
+  "conventionalCommits.scopes": [
+    "terraform",
+    "migrations",
+    "docker",
+    "cicd",
+    "workflow",
+    "github",
+    "packer"
+  ]
 }
