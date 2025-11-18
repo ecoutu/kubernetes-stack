@@ -64,6 +64,51 @@ jobs:
       - name: Check Migration Status
         run: ./migrate.sh status
 
+  packer-build:
+    name: Build Packer AMI
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-Packer-${{ github.run_id }}
+
+      - name: Setup Packer
+        uses: hashicorp/setup-packer@main
+        with:
+          version: "latest"
+
+      - name: Initialize Packer
+        run: |
+          cd packer
+          packer init ubuntu-hardened.pkr.hcl
+
+      - name: Validate Packer Template
+        run: |
+          cd packer
+          packer validate ubuntu-hardened.pkr.hcl
+
+      - name: Build AMI with Packer
+        run: |
+          cd packer
+          packer build ubuntu-hardened.pkr.hcl
+
+      - name: Upload Packer Manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: packer-manifest
+          path: packer/packer-manifest.json
+          retention-days: 30
+
   build-and-push:
     name: Docker Build and Push
     runs-on: ubuntu-latest
@@ -180,6 +225,7 @@ jobs:
           TF_VAR_enable_remote_state: ${{ vars.TF_VAR_enable_remote_state }}
           TF_VAR_terraform_state_bucket: ${{ vars.TF_VAR_terraform_state_bucket }}
           TF_VAR_github_token: ${{ secrets.TF_VAR_github_token }}
+          TF_VAR_ssh_public_key: ${{ secrets.TF_VAR_ssh_public_key }}
 
       - name: Update Pull Request
         uses: actions/github-script@v7
@@ -208,14 +254,16 @@ jobs:
               body: output
             })
 
-      - name: Terraform Plan Status
+      - name: Terraform Plan Rollback on Failure
         if: steps.plan.outcome == 'failure'
-        run: exit 1
+        run: |
+          ./migrate.sh down
+          exit 1
 
   plan-production:
     name: Terraform Plan (Production)
     runs-on: ubuntu-latest
-    needs: [validate, migration-check]
+    needs: [validate, migration-check, packer-build]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     outputs:
       has_changes: ${{ steps.check_plan.outputs.has_changes }}
@@ -269,6 +317,7 @@ jobs:
           TF_VAR_enable_remote_state: ${{ vars.TF_VAR_enable_remote_state }}
           TF_VAR_terraform_state_bucket: ${{ vars.TF_VAR_terraform_state_bucket }}
           TF_VAR_github_token: ${{ secrets.TF_VAR_github_token }}
+          TF_VAR_ssh_public_key: ${{ secrets.TF_VAR_ssh_public_key }}
 
       - name: Check Plan Results
         id: check_plan
@@ -297,6 +346,7 @@ jobs:
         if: steps.plan.outcome == 'failure'
         run: |
           echo "::error::Terraform plan failed (exit code 1)."
+          ./migrate.sh down
           exit 1 # Fail the job if a critical error occurred during planning
 
       - name: Display Plan Summary
@@ -395,6 +445,7 @@ jobs:
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Terraform Apply
+        id: apply
         run: terraform apply tfplan
         env:
           TF_VAR_aws_region: ${{ vars.TF_VAR_aws_region }}
@@ -409,6 +460,11 @@ jobs:
           TF_VAR_enable_remote_state: ${{ vars.TF_VAR_enable_remote_state }}
           TF_VAR_terraform_state_bucket: ${{ vars.TF_VAR_terraform_state_bucket }}
           TF_VAR_github_token: ${{ secrets.TF_VAR_github_token }}
+          TF_VAR_ssh_public_key: ${{ secrets.TF_VAR_ssh_public_key }}
+
+      - name: Rollback Migrations on Failure
+        if: steps.apply.outcome == 'failure'
+        run: ./migrate.sh down
 
       - name: Comment on Commit
         uses: actions/github-script@v7
