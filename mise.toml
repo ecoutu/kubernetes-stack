@@ -1,0 +1,7 @@
+[tools]
+docker-compose = "latest"
+go = "latest"
+helm = "latest"
+kubectl = "latest"
+packer = "latest"
+terraform = "latest"
