@@ -24,24 +24,24 @@ AWS infrastructure with VPC, IAM, and CI/CD using modular Terraform and GitHub A
 
 1. Copy the example variables file:
    ```bash
-   cp terraform.tfvars.example terraform.tfvars
+   cp terraform/terraform.tfvars.example terraform/terraform.tfvars
    ```
 
-2. Edit `terraform.tfvars` with your desired values
+2. Edit `terraform/terraform.tfvars` with your desired values
 
 3. Initialize Terraform:
    ```bash
-   terraform init
+   cd terraform && terraform init
    ```
 
 4. Review the planned changes:
    ```bash
-   terraform plan
+   cd terraform && terraform plan
    ```
 
 5. Apply the configuration:
    ```bash
-   terraform apply
+   cd terraform && terraform apply
    ```
 
 6. Destroy resources when needed:
@@ -83,7 +83,7 @@ See [DOCKER.md](DOCKER.md) for complete Docker documentation.
 | github_repo | GitHub repository | terraform-stack |
 | terraform_state_bucket | S3 bucket for state | "" |
 
-See [variables.tf](variables.tf) for complete list.
+See [terraform/variables.tf](terraform/variables.tf) for complete list.
 
 ## Outputs
 
@@ -93,7 +93,7 @@ Key outputs include:
 - GitHub Actions role ARN and OIDC provider
 - Terraform state bucket and lock table
 
-See [outputs.tf](outputs.tf) for complete list.
+See [terraform/outputs.tf](terraform/outputs.tf) for complete list.
 
 ## State Migrations
 

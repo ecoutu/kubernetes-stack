@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: terraform-stack
-    working_dir: /workspace
+    working_dir: /workspace/terraform
     volumes:
       # Mount current directory
       - .:/workspace
@@ -32,7 +32,7 @@ services:
       context: .
       dockerfile: Dockerfile.dev
     container_name: terraform-stack-dev
-    working_dir: /workspace
+    working_dir: /workspace/terraform
     volumes:
       - .:/workspace
       - ~/.aws:/root/.aws:ro

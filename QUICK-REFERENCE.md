@@ -5,11 +5,11 @@
 ### Local Development
 
 ```bash
-# Terraform
-terraform init                    # Initialize Terraform
-terraform plan                    # Preview changes
-terraform apply                   # Apply changes
-terraform destroy                 # Destroy infrastructure
+# Terraform (run from terraform/ directory)
+cd terraform && terraform init    # Initialize Terraform
+cd terraform && terraform plan    # Preview changes
+cd terraform && terraform apply   # Apply changes
+cd terraform && terraform destroy # Destroy infrastructure
 
 # Migrations
 ./migrate.sh status               # Check migration status
@@ -53,16 +53,16 @@ make docker-clean                 # Remove all Docker resources
 
 ```
 terraform-stack/
-├── main.tf                       # Root Terraform config
-├── variables.tf                  # Input variables
-├── outputs.tf                    # Output values
-├── terraform.tfvars              # Variable values (git-ignored)
-│
-├── modules/                      # Terraform modules
-│   ├── iam/                      # IAM orchestration
-│   ├── iam-role/                 # Reusable IAM role
-│   ├── iam-user/                 # Reusable IAM user
-│   └── vpc/                      # VPC infrastructure
+├── terraform/                    # Terraform configuration directory
+│   ├── main.tf                   # Root Terraform config
+│   ├── variables.tf              # Input variables
+│   ├── outputs.tf                # Output values
+│   ├── terraform.tfvars          # Variable values (git-ignored)
+│   └── modules/                  # Terraform modules
+│       ├── iam/                  # IAM orchestration
+│       ├── iam-role/             # Reusable IAM role
+│       ├── iam-user/             # Reusable IAM user
+│       └── vpc/                  # VPC infrastructure
 │
 ├── migrations/                   # State migration system
 │   ├── main.go                   # Migration tool source
@@ -88,11 +88,11 @@ terraform-stack/
 
 ```bash
 # 1. Configure variables
-cp terraform.tfvars.example terraform.tfvars
-vim terraform.tfvars
+cp terraform/terraform.tfvars.example terraform/terraform.tfvars
+vim terraform/terraform.tfvars
 
 # 2. Initialize
-terraform init
+cd terraform && terraform init
 
 # 3. Check migrations
 ./migrate.sh status
@@ -101,10 +101,10 @@ terraform init
 ./migrate.sh up
 
 # 5. Plan infrastructure
-terraform plan
+cd terraform && terraform plan
 
 # 6. Apply infrastructure
-terraform apply
+cd terraform && terraform apply
 ```
 
 ### Initial Setup (Docker)
@@ -140,7 +140,7 @@ vim migrations/files/000X_move_resource_to_module.go
 ./migrate.sh up
 
 # 4. Verify no changes
-terraform plan
+cd terraform && terraform plan
 
 # 5. Rollback if needed
 ./migrate.sh down
@@ -156,8 +156,8 @@ cp terraform.tfstate terraform.tfstate.backup
 ./migrate.sh create refactor_modules
 
 # 3. Edit Terraform files
-vim main.tf
-vim modules/*/main.tf
+vim terraform/main.tf
+vim terraform/modules/*/main.tf
 
 # 4. Define migration operations
 vim migrations/files/000X_refactor_modules.go
@@ -166,7 +166,7 @@ vim migrations/files/000X_refactor_modules.go
 ./migrate.sh up
 
 # 6. Verify
-terraform plan  # Should show no changes
+cd terraform && terraform plan  # Should show no changes
 
 # 7. If issues, rollback
 ./migrate.sh down
@@ -262,7 +262,7 @@ docker-compose run --rm -v ~/.aws:/root/.aws:ro terraform /bin/bash
 
 ```hcl
 module "iam" {
-  source = "./modules/iam"
+  source = "./terraform/modules/iam"
 
   account_alias             = "my-account"
   require_mfa              = true
@@ -274,7 +274,7 @@ module "iam" {
 
 ```hcl
 module "vpc" {
-  source = "./modules/vpc"
+  source = "./terraform/modules/vpc"
 
   vpc_cidr           = "10.0.0.0/16"
   availability_zones = 2

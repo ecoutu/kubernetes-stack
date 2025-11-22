@@ -5,6 +5,7 @@ This module automatically configures GitHub repository secrets for AWS OIDC auth
 ## What It Does
 
 Automatically sets these in your GitHub repository:
+
 - **Secret**: `AWS_ROLE_TO_ASSUME` (the IAM role ARN)
 - **Variable**: `AWS_REGION` (the AWS region)
 
@@ -29,9 +30,9 @@ export TF_VAR_github_token="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
 ### Step 3: Apply Terraform
 
-```bash
-terraform init
-terraform apply
+````bash
+cd terraform && terraform init
+cd terraform && terraform apply
 ```
 
 This will:
@@ -49,15 +50,15 @@ gh secret list -R ecoutu/terraform-stack
 gh variable list -R ecoutu/terraform-stack
 
 # View Terraform outputs
-terraform output github_secrets_configured
-```
+cd terraform && terraform output github_secrets_configured
+````
 
 ## How It Works
 
 The module uses the GitHub Terraform provider to manage repository secrets:
 
 ```hcl
-# In main.tf - Already configured for you
+# In terraform/main.tf - Already configured for you
 module "github_secrets" {
   source = "./modules/github-secrets"
   count  = var.github_token != "" ? 1 : 0
@@ -70,6 +71,7 @@ module "github_secrets" {
 ```
 
 **Note**: The `count` conditional means:
+
 - ✅ If `github_token` is set → secrets are created automatically
 - ⏭️ If `github_token` is empty → skips secret creation (you can set manually)
 
@@ -84,7 +86,7 @@ terraform output github_actions_role_arn
 
 # 2. Manually set in GitHub
 gh secret set AWS_ROLE_TO_ASSUME \
-  --body "$(terraform output -raw github_actions_role_arn)" \
+     --body "$(cd terraform && terraform output -raw github_actions_role_arn)" \
   --repo ecoutu/terraform-stack
 ```
 
@@ -98,16 +100,16 @@ steps:
   - name: Configure AWS Credentials via OIDC
     uses: aws-actions/configure-aws-credentials@v4
     with:
-      role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}  # ← Set by Terraform
-      aws-region: ${{ vars.AWS_REGION }}                 # ← Set by Terraform
+      role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }} # ← Set by Terraform
+      aws-region: ${{ vars.AWS_REGION }} # ← Set by Terraform
 ```
 
 ## Updating Secrets
 
 When the IAM role ARN changes, simply run:
 
-```bash
-terraform apply
+````bash
+cd terraform && terraform apply
 ```
 
 Terraform will automatically update the secret in GitHub.
@@ -136,7 +138,7 @@ Terraform will automatically update the secret in GitHub.
 # Force update
 terraform taint 'module.github_secrets[0].github_actions_secret.aws_role_to_assume'
 terraform apply
-```
+````
 
 ## Module Files
 
@@ -150,6 +152,6 @@ modules/github-secrets/
 
 ## See Also
 
-- Full documentation: `modules/github-secrets/README.md`
+- Full documentation: `terraform/modules/github-secrets/README.md`
 - OIDC setup guide: `OIDC-SETUP.md`
 - Workflow configuration: `.github/workflows/terraform.yml`
