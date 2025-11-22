@@ -27,13 +27,13 @@ migrate-create: ## Create new migration (usage: make migrate-create NAME=my_migr
 	@./migrate.sh create $(NAME)
 
 init: ## Initialize Terraform
-	@terraform init
+	@cd terraform && terraform init
 
 plan: ## Run terraform plan
-	@terraform plan
+	@cd terraform && terraform plan
 
 apply: ## Run terraform apply
-	@terraform apply
+	@cd terraform && terraform apply
 
 clean: ## Remove built binaries and temporary files
 	@rm -f migrations/migrate

@@ -362,10 +362,11 @@ func executeMigration(migration Migration, direction string) error {
 
 func backupState() {
 	timestamp := time.Now().Format("20060102_150405")
-	backupFile := fmt.Sprintf("terraform.tfstate.backup_%s", timestamp)
+	backupFile := fmt.Sprintf("../terraform/terraform.tfstate.backup_%s", timestamp)
+	stateFile := "../terraform/terraform.tfstate"
 
-	if _, err := os.Stat("terraform.tfstate"); err == nil {
-		input, _ := os.ReadFile("terraform.tfstate")
+	if _, err := os.Stat(stateFile); err == nil {
+		input, _ := os.ReadFile(stateFile)
 		os.WriteFile(backupFile, input, 0644)
 		fmt.Printf("%s✓ State backed up to: %s%s\n\n", colorGreen, backupFile, colorReset)
 	}

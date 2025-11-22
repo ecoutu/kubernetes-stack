@@ -40,13 +40,13 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       - name: Terraform Format Check
-        run: terraform fmt -check -recursive
+        run: cd terraform && terraform fmt -check -recursive
 
       - name: Terraform Init
-        run: terraform init -backend=false
+        run: cd terraform && terraform init -backend=false
 
       - name: Terraform Validate
-        run: terraform validate
+        run: cd terraform && terraform validate
 
   migration-check:
     name: Check Migrations
@@ -233,11 +233,11 @@ jobs:
         run: ./migrate.sh up
 
       - name: Terraform Init
-        run: terraform init
+        run: cd terraform && terraform init
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color -out=tfplan
+        run: cd terraform && terraform plan -no-color -out=tfplan
         continue-on-error: true
         env:
           TF_VAR_aws_region: ${{ vars.TF_VAR_aws_region }}
@@ -316,11 +316,11 @@ jobs:
         run: make build
 
       - name: Terraform Init
-        run: terraform init
+        run: cd terraform && terraform init
 
       - name: Terraform Plan and Capture Exit Code
         id: plan
-        run: terraform plan -detailed-exitcode -out=tfplan -no-color
+        run: cd terraform && terraform plan -detailed-exitcode -out=tfplan -no-color
         continue-on-error: true # Allow the step to continue even if it exits with 1 or 2
         env:
           TF_VAR_aws_region: ${{ vars.TF_VAR_aws_region }}
@@ -359,6 +359,7 @@ jobs:
           # This environment variable is set by hashicorp/setup-terraform when terraform_wrapper is true
           # and contains the exit code of the wrapped terraform command.
           EXIT_CODE: ${{ steps.plan.outputs.exitcode }}
+        working-directory: terraform
 
       - name: Handle Terraform Plan Errors
         if: steps.plan.outcome == 'failure'
@@ -379,7 +380,7 @@ jobs:
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`terraform" >> $GITHUB_STEP_SUMMARY
-          cat plan-output.txt >> $GITHUB_STEP_SUMMARY
+          cat terraform/plan-output.txt >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload Plan Artifact
@@ -388,8 +389,8 @@ jobs:
         with:
           name: tfplan
           path: |
-            tfplan
-            plan-output.txt
+            terraform/tfplan
+            terraform/plan-output.txt
           retention-days: 7
 
   apply:
@@ -443,24 +444,25 @@ jobs:
         run: ./migrate.sh up
 
       - name: Terraform Init
-        run: terraform init
+        run: cd terraform && terraform init
 
       - name: Download Plan Artifact
         uses: actions/download-artifact@v4
         with:
           name: tfplan
+          path: terraform
 
       - name: Display Plan Being Applied
         run: |
           echo "### 🚀 Applying Terraform Plan" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`terraform" >> $GITHUB_STEP_SUMMARY
-          cat plan-output.txt >> $GITHUB_STEP_SUMMARY
+          cat terraform/plan-output.txt >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Terraform Apply
         id: apply
-        run: terraform apply tfplan
+        run: cd terraform && terraform apply tfplan
         env:
           TF_VAR_aws_region: ${{ vars.TF_VAR_aws_region }}
           TF_VAR_environment: ${{ vars.TF_VAR_environment }}

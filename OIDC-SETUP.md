@@ -5,18 +5,19 @@
 ✅ **AWS IAM OIDC Provider** - Trusts GitHub Actions tokens
 ✅ **IAM Role**: `GitHubActionsTerraformRole` - For your workflows to assume
 ✅ **GitHub Actions Workflow** - Example workflow using OIDC authentication
-✅ **Terraform Module** - `modules/github-oidc-role/` for OIDC setup
+✅ **Terraform Module** - `terraform/modules/github-oidc-role/` for OIDC setup
 
 ## Deploy in 3 Steps
 
 ### Step 1: Apply Terraform
 
 ```bash
-terraform init
-terraform apply
+cd terraform && terraform init
+cd terraform && terraform apply
 ```
 
 This creates:
+
 - GitHub OIDC provider in AWS
 - IAM role with Terraform permissions
 - Trust policy restricting to `ecoutu/terraform-stack` from `main`/`develop` branches
@@ -24,20 +25,23 @@ This creates:
 ### Step 2: Add GitHub Secret
 
 Get the role ARN:
+
 ```bash
-terraform output github_actions_role_arn
+cd terraform && terraform output github_actions_role_arn
 ```
 
 Add to GitHub (choose one method):
 
 **Method A - GitHub CLI:**
+
 ```bash
 gh secret set AWS_ROLE_TO_ASSUME \
-  --body "$(terraform output -raw github_actions_role_arn)" \
+     --body "$(cd terraform && terraform output -raw github_actions_role_arn)" \
   --repo ecoutu/terraform-stack
 ```
 
 **Method B - Web UI:**
+
 1. Go to: https://github.com/ecoutu/terraform-stack/settings/secrets/actions
 2. Click "New repository secret"
 3. Name: `AWS_ROLE_TO_ASSUME`
@@ -62,7 +66,7 @@ Add these to any workflow file:
 
 ```yaml
 permissions:
-  id-token: write   # Required for OIDC
+  id-token: write # Required for OIDC
   contents: read
 
 jobs:
@@ -92,26 +96,31 @@ jobs:
 ## Verification
 
 Check the role was created:
+
 ```bash
 aws iam get-role --role-name GitHubActionsTerraformRole
 ```
 
 View outputs:
+
 ```bash
-terraform output
+cd terraform && terraform output
 ```
 
 ## Troubleshooting
 
 **Error: "Not authorized to perform: sts:AssumeRoleWithWebIdentity"**
+
 - Ensure you're running from `main` or `develop` branch
 - Check repository name matches exactly: `ecoutu/terraform-stack`
 
 **Error: "Missing required permissions"**
+
 - Add `id-token: write` permission to workflow
 - Add `contents: read` permission to workflow
 
 **Secret not found**
+
 - Verify secret exists: `gh secret list -R ecoutu/terraform-stack`
 - Re-add using Step 2 above
 

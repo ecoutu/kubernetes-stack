@@ -5,3 +5,6 @@ helm = "latest"
 kubectl = "latest"
 packer = "latest"
 terraform = "latest"
+
+[env]
+PAGER="cat"
