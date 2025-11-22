@@ -96,15 +96,6 @@ build {
     ]
   }
 
-  # Set hostname
-  provisioner "shell" {
-    inline = [
-      "echo 'Setting hostname to minikube...'",
-      "sudo hostnamectl set-hostname minikube",
-      "echo '127.0.0.1 minikube' | sudo tee -a /etc/hosts"
-    ]
-  }
-
   # Create ecoutu user and setup SSH
   provisioner "shell" {
     inline = [

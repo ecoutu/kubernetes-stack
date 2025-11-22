@@ -125,6 +125,13 @@ module "minikube" {
   key_name      = module.ssh_key.key_name
   ami_id        = data.aws_ami.packer_minikube.id
 
+  # Set hostname to minikube
+  user_data = <<-EOF
+    #!/bin/bash
+    hostnamectl set-hostname minikube
+    echo "127.0.0.1 minikube" >> /etc/hosts
+  EOF
+
   # Minikube-specific security group rules
   security_group_ingress_rules = [
     {
