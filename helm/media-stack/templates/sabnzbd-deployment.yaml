@@ -45,11 +45,11 @@ spec:
           value: {{ .Values.sabnzbd.env.PGID | quote }}
         - name: TZ
           value: {{ .Values.sabnzbd.env.TZ | quote }}
-        {{- if .Values.s3.enabled }}
+{{- if .Values.s3.enabled }}
         envFrom:
         - configMapRef:
             name: {{ include "media-stack.fullname" . }}-s3-config
-        {{- end }}
+{{- end }}
         volumeMounts:
         - name: config
           mountPath: /config
