@@ -49,6 +49,11 @@ spec:
           value: {{ .Values.radarr.env.PGID | quote }}
         - name: TZ
           value: {{ .Values.radarr.env.TZ | quote }}
+        {{- if .Values.s3.enabled }}
+        envFrom:
+        - configMapRef:
+            name: {{ include "media-stack.fullname" . }}-s3-config
+        {{- end }}
         volumeMounts:
         - name: config
           mountPath: /config

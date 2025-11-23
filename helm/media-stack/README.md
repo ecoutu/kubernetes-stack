@@ -59,6 +59,10 @@ minikube service media-stack-jellyfin
 
 ### Storage
 
+The chart supports two storage modes:
+
+#### Local Storage (Default)
+
 The chart creates shared persistent volumes for:
 
 - **Media**: 50Gi (shared by all applications)
@@ -74,6 +78,27 @@ persistence:
   downloads:
     size: 50Gi
 ```
+
+#### S3 Storage (Optional)
+
+For production deployments with larger media libraries, you can use AWS S3 or S3-compatible storage:
+
+```yaml
+s3:
+  enabled: true
+  bucketName: "my-media-bucket"
+  region: "us-east-1"
+  # Optional: for MinIO or other S3-compatible storage
+  # endpoint: "http://minio.example.com:9000"
+  # usePathStyle: true
+```
+
+**Prerequisites for S3 Storage:**
+- S3 bucket created in AWS
+- EC2 instance with IAM role that has S3 access permissions
+- Applications configured to use S3 paths
+
+**Note:** The S3 configuration provides environment variables to the applications. Individual application configuration is still required to point media paths to S3 bucket locations. See the [S3 Integration Guide](#s3-integration-guide) below.
 
 ### Resources
 
@@ -261,6 +286,136 @@ All applications communicate via Kubernetes service names:
 - Use NetworkPolicies
 - Consider VPN access
 
+## S3 Integration Guide
+
+### Setting up S3 Storage
+
+#### 1. Terraform Configuration
+
+The Terraform stack includes an S3 bucket module specifically designed for media storage. To enable it:
+
+1. The S3 bucket is automatically created when you apply the Terraform configuration
+2. An IAM role with S3 access permissions is attached to the EC2 instance
+3. The bucket is configured with Intelligent-Tiering for cost optimization
+
+**Bucket Features:**
+- **Encryption**: Server-side encryption (AES256) enabled by default
+- **Lifecycle**: Intelligent-Tiering automatically moves objects between access tiers
+- **Security**: Public access blocked, SSL/TLS enforced
+- **Permissions**: EC2 instance can read, write, and delete objects
+
+#### 2. Enable S3 in Helm Chart
+
+Update your `values.yaml`:
+
+```yaml
+s3:
+  enabled: true
+  bucketName: "dev-my-project-media"  # Use the bucket name from Terraform output
+  region: "us-east-1"
+```
+
+Deploy or upgrade the Helm chart:
+
+```bash
+helm upgrade --install media-stack ./helm/media-stack -f values.yaml
+```
+
+#### 3. Configure Applications
+
+The S3 configuration provides the following environment variables to all media stack applications:
+- `AWS_REGION`: AWS region of the S3 bucket
+- `S3_BUCKET`: Name of the S3 bucket
+- `S3_ENDPOINT`: (Optional) Custom S3 endpoint for MinIO or other services
+
+**Note:** While the environment variables are available, each application needs to be configured individually to use S3 storage. This typically involves:
+
+1. Installing S3 plugins or using built-in S3 support
+2. Configuring media paths to use S3 URLs or mount points
+3. Setting up S3FS or similar FUSE filesystem to mount S3 as a local directory
+
+#### 4. Using S3FS (Recommended Approach)
+
+For easier integration, you can mount the S3 bucket as a filesystem using s3fs-fuse:
+
+**On the Minikube EC2 Instance:**
+
+```bash
+# Install s3fs
+sudo apt-get update
+sudo apt-get install s3fs
+
+# Create mount point
+sudo mkdir -p /mnt/s3-media
+
+# Mount S3 bucket (using IAM role credentials automatically)
+sudo s3fs dev-my-project-media /mnt/s3-media -o iam_role=auto,allow_other,use_cache=/tmp
+
+# Make mount persistent (add to /etc/fstab)
+echo "dev-my-project-media /mnt/s3-media fuse.s3fs _netdev,iam_role=auto,allow_other,use_cache=/tmp 0 0" | sudo tee -a /etc/fstab
+```
+
+Then update your application paths to use `/mnt/s3-media` instead of local storage.
+
+#### 5. IAM Role Requirements
+
+The EC2 instance must have an IAM role with the following permissions:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::your-bucket-name",
+        "arn:aws:s3:::your-bucket-name/*"
+      ]
+    }
+  ]
+}
+```
+
+This is automatically configured when using the Terraform stack.
+
+#### 6. Cost Considerations
+
+**Storage Costs (us-east-1):**
+- Standard: ~$23/TB/month
+- Intelligent-Tiering: ~$23/TB/month (frequent), ~$12.50/TB/month (infrequent)
+- Standard-IA: ~$12.50/TB/month
+- Glacier: ~$3.60/TB/month
+
+**Data Transfer:**
+- Data IN: Free
+- Data OUT to Internet: $0.09/GB (first 10TB)
+- Data OUT to EC2 (same region): Free
+
+**Recommendation:** Use Intelligent-Tiering for automatic cost optimization. It monitors access patterns and moves objects to the most cost-effective tier.
+
+### Alternative: MinIO for Development
+
+For development or testing, you can use MinIO as an S3-compatible storage:
+
+```bash
+# Install MinIO on Kubernetes
+kubectl apply -f https://raw.githubusercontent.com/minio/minio/master/docs/orchestration/kubernetes/minio-standalone-deployment.yaml
+
+# Update values.yaml
+s3:
+  enabled: true
+  bucketName: "media"
+  region: "us-east-1"
+  endpoint: "http://minio-service:9000"
+  usePathStyle: true
+```
+
 ## Support
 
 For issues specific to individual applications, consult their documentation:
@@ -270,3 +425,7 @@ For issues specific to individual applications, consult their documentation:
 - [Radarr Wiki](https://wiki.servarr.com/radarr)
 - [Bazarr Wiki](https://wiki.bazarr.media/)
 - [Jellyfin Docs](https://jellyfin.org/docs/)
+
+For S3 integration:
+- [AWS S3 Documentation](https://docs.aws.amazon.com/s3/)
+- [s3fs-fuse GitHub](https://github.com/s3fs-fuse/s3fs-fuse)

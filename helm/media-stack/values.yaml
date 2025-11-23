@@ -3,6 +3,18 @@ global:
   storageClass: "standard"
   timezone: "America/Toronto"
 
+# S3 Configuration for media storage
+s3:
+  enabled: false
+  # S3 bucket name (leave empty to use local storage)
+  bucketName: ""
+  # AWS region where the bucket is located
+  region: "us-east-1"
+  # S3 endpoint (leave empty for AWS S3, set for MinIO or other S3-compatible storage)
+  endpoint: ""
+  # Use path-style URLs (required for MinIO)
+  usePathStyle: false
+
 # Metrics Server - Resource monitoring
 metricsServer:
   enabled: true

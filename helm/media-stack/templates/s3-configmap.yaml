@@ -1,0 +1,17 @@
+{{- if .Values.s3.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "media-stack.fullname" . }}-s3-config
+  labels:
+    {{- include "media-stack.labels" . | nindent 4 }}
+data:
+  AWS_REGION: {{ .Values.s3.region | quote }}
+  S3_BUCKET: {{ .Values.s3.bucketName | quote }}
+  {{- if .Values.s3.endpoint }}
+  S3_ENDPOINT: {{ .Values.s3.endpoint | quote }}
+  {{- end }}
+  {{- if .Values.s3.usePathStyle }}
+  S3_USE_PATH_STYLE: "true"
+  {{- end }}
+{{- end }}
