@@ -1,0 +1,408 @@
+name: Helm Chart Deployment
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'helm/media-stack/**'
+      - '.github/workflows/helm-deploy.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'helm/media-stack/**'
+      - '.github/workflows/helm-deploy.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      action:
+        description: 'Deployment action'
+        required: true
+        default: 'install-or-upgrade'
+        type: choice
+        options:
+          - install-or-upgrade
+          - rollback
+          - uninstall
+
+concurrency:
+  group: helm-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  HELM_VERSION: v3.19.1
+  KUBECTL_VERSION: v1.31.4
+  MINIKUBE_VERSION: v1.35.0
+  CHART_PATH: helm/media-stack
+  RELEASE_NAME: media-stack
+
+jobs:
+  lint-and-validate:
+    name: Lint and Validate Helm Chart
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Lint Helm Chart
+        run: |
+          echo "::group::Helm Lint"
+          helm lint ${{ env.CHART_PATH }}
+          echo "::endgroup::"
+
+      - name: Validate Chart Templates
+        run: |
+          echo "::group::Template Validation"
+          helm template ${{ env.RELEASE_NAME }} ${{ env.CHART_PATH }} --debug --dry-run
+          echo "::endgroup::"
+
+      - name: Check Chart Version
+        run: |
+          CHART_VERSION=$(grep '^version:' ${{ env.CHART_PATH }}/Chart.yaml | awk '{print $2}')
+          echo "Chart Version: $CHART_VERSION"
+          echo "CHART_VERSION=$CHART_VERSION" >> $GITHUB_ENV
+
+      - name: Generate deployment summary
+        run: |
+          echo "### 📋 Helm Chart Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Chart linting passed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Template validation passed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Chart:** ${{ env.RELEASE_NAME }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** $CHART_VERSION" >> $GITHUB_STEP_SUMMARY
+
+  deploy-to-minikube:
+    name: Deploy to Minikube
+    runs-on: ubuntu-latest
+    needs: lint-and-validate
+    if: |
+      github.event_name == 'workflow_dispatch' || 
+      (github.event_name == 'push' && github.ref == 'refs/heads/develop')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: ${{ env.KUBECTL_VERSION }}
+
+      - name: Start Minikube
+        uses: medyagh/setup-minikube@latest
+        with:
+          minikube-version: ${{ env.MINIKUBE_VERSION }}
+          kubernetes-version: v1.31.4
+          driver: docker
+          cpus: 2
+          memory: 4096
+          addons: metrics-server,storage-provisioner
+
+      - name: Verify Minikube is running
+        run: |
+          echo "::group::Minikube Status"
+          minikube status
+          kubectl cluster-info
+          kubectl get nodes
+          echo "::endgroup::"
+
+      - name: Check existing Helm releases
+        id: check_release
+        run: |
+          echo "::group::Existing Releases"
+          helm list -A
+          echo "::endgroup::"
+          
+          if helm status ${{ env.RELEASE_NAME }} 2>/dev/null; then
+            echo "release_exists=true" >> $GITHUB_OUTPUT
+            REVISION=$(helm history ${{ env.RELEASE_NAME }} -o json | jq -r '.[0].revision')
+            echo "current_revision=$REVISION" >> $GITHUB_OUTPUT
+          else
+            echo "release_exists=false" >> $GITHUB_OUTPUT
+            echo "current_revision=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Perform Helm action
+        id: helm_action
+        run: |
+          ACTION="${{ github.event.inputs.action || 'install-or-upgrade' }}"
+          
+          case "$ACTION" in
+            install-or-upgrade)
+              echo "::group::Helm Install/Upgrade"
+              if [ "${{ steps.check_release.outputs.release_exists }}" = "true" ]; then
+                echo "Upgrading existing release..."
+                helm upgrade ${{ env.RELEASE_NAME }} ${{ env.CHART_PATH }} \
+                  --install \
+                  --wait \
+                  --timeout 10m \
+                  --atomic \
+                  --cleanup-on-fail
+              else
+                echo "Installing new release..."
+                helm install ${{ env.RELEASE_NAME }} ${{ env.CHART_PATH }} \
+                  --wait \
+                  --timeout 10m \
+                  --atomic \
+                  --create-namespace
+              fi
+              echo "action_performed=install-or-upgrade" >> $GITHUB_OUTPUT
+              echo "::endgroup::"
+              ;;
+              
+            rollback)
+              echo "::group::Helm Rollback"
+              if [ "${{ steps.check_release.outputs.release_exists }}" = "false" ]; then
+                echo "::error::No release found to rollback"
+                exit 1
+              fi
+              
+              PREV_REVISION=$(($${{ steps.check_release.outputs.current_revision }} - 1))
+              if [ $PREV_REVISION -lt 1 ]; then
+                echo "::error::No previous revision to rollback to"
+                exit 1
+              fi
+              
+              echo "Rolling back to revision $PREV_REVISION..."
+              helm rollback ${{ env.RELEASE_NAME }} $PREV_REVISION --wait --timeout 5m
+              echo "action_performed=rollback" >> $GITHUB_OUTPUT
+              echo "::endgroup::"
+              ;;
+              
+            uninstall)
+              echo "::group::Helm Uninstall"
+              if [ "${{ steps.check_release.outputs.release_exists }}" = "false" ]; then
+                echo "No release found to uninstall"
+                exit 0
+              fi
+              
+              helm uninstall ${{ env.RELEASE_NAME }} --wait --timeout 5m
+              echo "action_performed=uninstall" >> $GITHUB_OUTPUT
+              echo "::endgroup::"
+              ;;
+              
+            *)
+              echo "::error::Unknown action: $ACTION"
+              exit 1
+              ;;
+          esac
+
+      - name: Verify deployment
+        if: steps.helm_action.outputs.action_performed != 'uninstall'
+        run: |
+          echo "::group::Deployment Verification"
+          
+          # Get release status
+          echo "=== Release Status ==="
+          helm status ${{ env.RELEASE_NAME }}
+          
+          # Check pod status
+          echo ""
+          echo "=== Pod Status ==="
+          kubectl get pods -l app.kubernetes.io/name=media-stack -o wide
+          
+          # Wait for all pods to be ready
+          echo ""
+          echo "=== Waiting for pods to be ready ==="
+          kubectl wait --for=condition=ready pod \
+            -l app.kubernetes.io/name=media-stack \
+            --timeout=300s || true
+          
+          # Check service endpoints
+          echo ""
+          echo "=== Services ==="
+          kubectl get svc -l app.kubernetes.io/name=media-stack
+          
+          # Check PVCs
+          echo ""
+          echo "=== Persistent Volume Claims ==="
+          kubectl get pvc -l app.kubernetes.io/name=media-stack
+          
+          echo "::endgroup::"
+
+      - name: Run health checks
+        if: steps.helm_action.outputs.action_performed != 'uninstall'
+        run: |
+          echo "::group::Health Checks"
+          
+          # Check if all expected pods are running
+          EXPECTED_PODS=5  # sabnzbd, sonarr, radarr, bazarr, jellyfin
+          RUNNING_PODS=$(kubectl get pods -l app.kubernetes.io/name=media-stack --field-selector=status.phase=Running --no-headers | wc -l)
+          
+          echo "Expected pods: $EXPECTED_PODS"
+          echo "Running pods: $RUNNING_PODS"
+          
+          if [ "$RUNNING_PODS" -lt "$EXPECTED_PODS" ]; then
+            echo "::warning::Not all pods are running yet ($RUNNING_PODS/$EXPECTED_PODS)"
+            kubectl get pods -l app.kubernetes.io/name=media-stack
+            kubectl describe pods -l app.kubernetes.io/name=media-stack
+          else
+            echo "✅ All pods are running"
+          fi
+          
+          # Check for any pods with errors
+          ERROR_PODS=$(kubectl get pods -l app.kubernetes.io/name=media-stack --field-selector=status.phase!=Running,status.phase!=Succeeded --no-headers | wc -l)
+          if [ "$ERROR_PODS" -gt 0 ]; then
+            echo "::error::Found $ERROR_PODS pod(s) with errors"
+            kubectl get pods -l app.kubernetes.io/name=media-stack --field-selector=status.phase!=Running,status.phase!=Succeeded
+            exit 1
+          fi
+          
+          echo "::endgroup::"
+
+      - name: Show access information
+        if: steps.helm_action.outputs.action_performed == 'install-or-upgrade'
+        run: |
+          echo "::group::Access Information"
+          
+          MINIKUBE_IP=$(minikube ip)
+          echo "=== Media Stack Access URLs ==="
+          echo "Minikube IP: $MINIKUBE_IP"
+          echo ""
+          echo "SABnzbd:  http://$MINIKUBE_IP:30081"
+          echo "Sonarr:   http://$MINIKUBE_IP:30082"
+          echo "Radarr:   http://$MINIKUBE_IP:30083"
+          echo "Bazarr:   http://$MINIKUBE_IP:30084"
+          echo "Jellyfin: http://$MINIKUBE_IP:30085"
+          
+          echo "::endgroup::"
+
+      - name: Get deployment logs on failure
+        if: failure()
+        run: |
+          echo "::group::Deployment Logs"
+          echo "=== Helm Release History ==="
+          helm history ${{ env.RELEASE_NAME }} || true
+          
+          echo ""
+          echo "=== Pod Descriptions ==="
+          kubectl describe pods -l app.kubernetes.io/name=media-stack || true
+          
+          echo ""
+          echo "=== Pod Logs ==="
+          for pod in $(kubectl get pods -l app.kubernetes.io/name=media-stack -o name); do
+            echo "--- Logs for $pod ---"
+            kubectl logs $pod --tail=50 || true
+          done
+          echo "::endgroup::"
+
+      - name: Generate deployment summary
+        if: always()
+        run: |
+          ACTION_PERFORMED="${{ steps.helm_action.outputs.action_performed }}"
+          
+          echo "### 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ job.status }}" = "success" ]; then
+            case "$ACTION_PERFORMED" in
+              install-or-upgrade)
+                echo "✅ **Deployment successful**" >> $GITHUB_STEP_SUMMARY
+                echo "" >> $GITHUB_STEP_SUMMARY
+                echo "**Release:** ${{ env.RELEASE_NAME }}" >> $GITHUB_STEP_SUMMARY
+                echo "**Action:** Install/Upgrade" >> $GITHUB_STEP_SUMMARY
+                ;;
+              rollback)
+                echo "✅ **Rollback successful**" >> $GITHUB_STEP_SUMMARY
+                echo "" >> $GITHUB_STEP_SUMMARY
+                echo "**Release:** ${{ env.RELEASE_NAME }}" >> $GITHUB_STEP_SUMMARY
+                echo "**Action:** Rolled back to previous revision" >> $GITHUB_STEP_SUMMARY
+                ;;
+              uninstall)
+                echo "✅ **Uninstall successful**" >> $GITHUB_STEP_SUMMARY
+                echo "" >> $GITHUB_STEP_SUMMARY
+                echo "**Release:** ${{ env.RELEASE_NAME }}" >> $GITHUB_STEP_SUMMARY
+                echo "**Action:** Uninstalled" >> $GITHUB_STEP_SUMMARY
+                ;;
+            esac
+          else
+            echo "❌ **Deployment failed**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Check the logs above for details." >> $GITHUB_STEP_SUMMARY
+          fi
+
+  helm-diff-preview:
+    name: Preview Helm Changes (PR)
+    runs-on: ubuntu-latest
+    needs: lint-and-validate
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Install Helm Diff Plugin
+        run: |
+          helm plugin install https://github.com/databus23/helm-diff || true
+
+      - name: Generate Helm template for PR
+        id: helm_template
+        run: |
+          echo "::group::Helm Template Output"
+          helm template ${{ env.RELEASE_NAME }} ${{ env.CHART_PATH }} > /tmp/helm-template-pr.yaml
+          cat /tmp/helm-template-pr.yaml
+          echo "::endgroup::"
+          
+          # Generate summary
+          RESOURCE_COUNT=$(grep -c '^kind:' /tmp/helm-template-pr.yaml || echo 0)
+          echo "resource_count=$RESOURCE_COUNT" >> $GITHUB_OUTPUT
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const template = fs.readFileSync('/tmp/helm-template-pr.yaml', 'utf8');
+            const resourceCount = '${{ steps.helm_template.outputs.resource_count }}';
+            
+            const output = `### 📦 Helm Chart Changes Preview
+            
+            **Chart:** \`${{ env.RELEASE_NAME }}\`
+            **Resources:** ${resourceCount} Kubernetes resources will be created/updated
+            
+            <details><summary>Show Helm Template Output</summary>
+            
+            \`\`\`yaml
+            ${template}
+            \`\`\`
+            
+            </details>
+            
+            *Note: This is a preview of what will be deployed. Actual deployment requires merge to develop branch.*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });

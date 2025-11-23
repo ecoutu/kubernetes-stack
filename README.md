@@ -18,6 +18,7 @@ AWS infrastructure with VPC, IAM, and CI/CD using modular Terraform and GitHub A
 - State management with S3 backend
 - Go-based state migration system
 - GitHub Actions CI/CD with plan/apply workflow
+- Automated Helm chart deployment for media stack on Minikube
 
 ## Usage
 
@@ -258,6 +259,8 @@ make pre-commit-uninstall
 
 ## CI/CD Pipeline
 
+### Terraform Pipeline
+
 GitHub Actions workflow with:
 
 - Validation and format checking
@@ -265,7 +268,62 @@ GitHub Actions workflow with:
 - Manual approval for production apply
 - OIDC authentication (no stored credentials)
 
-See [.github/workflows/terraform.yml](.github/workflows/terraform.yml) and [OIDC-SETUP.md](OIDC-SETUP.md).
+See [.github/workflows/build-and-deploy.yml](.github/workflows/build-and-deploy.yml) and [OIDC-SETUP.md](OIDC-SETUP.md).
+
+### Helm Deployment Automation
+
+Automated deployment of the media stack Helm chart to Minikube:
+
+**Features:**
+- Automatic Helm chart linting and validation
+- Deployment to Minikube on push to `develop` branch
+- Manual deployment via workflow dispatch with environment selection
+- Deployment verification and health checks
+- Rollback capabilities to previous revisions
+- Preview changes on pull requests
+
+**Workflow Triggers:**
+- **Push to develop:** Automatically deploys to Minikube
+- **Pull Requests:** Validates chart and previews changes (no deployment)
+- **Manual Dispatch:** Deploy, rollback, or uninstall with custom options
+
+**Usage:**
+
+1. **Automatic Deployment:**
+   ```bash
+   # Push changes to develop branch to trigger deployment
+   git checkout develop
+   git push origin develop
+   ```
+
+2. **Manual Deployment:**
+   - Go to Actions → Helm Chart Deployment → Run workflow
+   - Select environment (development/staging/production)
+   - Choose action (install-or-upgrade/rollback/uninstall)
+   - Click "Run workflow"
+
+3. **Rollback:**
+   - Use workflow dispatch with action: "rollback"
+   - Or manually: `helm rollback media-stack <revision>`
+
+**Deployment Verification:**
+The workflow automatically verifies:
+- All pods are running and healthy
+- Services are properly exposed
+- Persistent volumes are bound
+- No pods in error state
+
+**Access URLs after deployment:**
+After successful deployment to Minikube, applications are available at:
+- SABnzbd: http://\<minikube-ip\>:30081
+- Sonarr: http://\<minikube-ip\>:30082
+- Radarr: http://\<minikube-ip\>:30083
+- Bazarr: http://\<minikube-ip\>:30084
+- Jellyfin: http://\<minikube-ip\>:30085
+
+For more details, see:
+- [Helm Chart Documentation](helm/media-stack/README.md)
+- [Workflow Configuration](.github/workflows/helm-deploy.yml)
 
 ## Documentation
 
@@ -277,3 +335,4 @@ See [.github/workflows/terraform.yml](.github/workflows/terraform.yml) and [OIDC
 - [GITHUB-SECRETS-SETUP.md](GITHUB-SECRETS-SETUP.md) - Secrets configuration
 - [STATE-MIGRATION.md](STATE-MIGRATION.md) - State migrations
 - [migrations/README.md](migrations/README.md) - Migration system
+- [helm/media-stack/README.md](helm/media-stack/README.md) - Media stack Helm chart

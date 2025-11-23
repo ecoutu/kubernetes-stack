@@ -17,7 +17,18 @@ A complete media automation and streaming stack for Minikube, including:
 
 ## Installation
 
-### Quick Start
+### Automated Deployment (Recommended)
+
+The chart includes automated deployment via GitHub Actions:
+
+1. **Automatic:** Push changes to the `develop` branch triggers automatic deployment to Minikube
+2. **Manual:** Use GitHub Actions workflow dispatch for on-demand deployment
+   - Navigate to Actions → "Helm Chart Deployment" → "Run workflow"
+   - Select environment and action (install-or-upgrade, rollback, or uninstall)
+
+See the [main README](../../README.md#helm-deployment-automation) for complete automation documentation.
+
+### Manual Installation
 
 ```bash
 # Install the complete media stack
