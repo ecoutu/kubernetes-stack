@@ -92,7 +92,7 @@ variable "github_variables" {
 variable "minikube_instance_type" {
   description = "Instance type to use for the minikube EC2 instance"
   type        = string
-  default     = "t3.small"
+  default     = "m7i-flex.large"
 }
 
 variable "allowed_ssh_cidr_blocks" {

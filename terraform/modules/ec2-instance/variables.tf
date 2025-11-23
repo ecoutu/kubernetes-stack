@@ -16,7 +16,7 @@ variable "vpc_id" {
 variable "instance_type" {
   description = "EC2 instance type"
   type        = string
-  default     = "t3.micro"
+  default     = "m7i-flex.large"
 }
 
 variable "name_prefix" {
