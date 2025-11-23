@@ -134,13 +134,9 @@ module "minikube_role" {
             Action = [
               "s3:GetObject",
               "s3:PutObject",
-              "s3:DeleteObject",
-              "s3:ListBucket"
+              "s3:DeleteObject"
             ]
-            Resource = [
-              module.media_bucket.bucket_arn,
-              "${module.media_bucket.bucket_arn}/*"
-            ]
+            Resource = "${module.media_bucket.bucket_arn}/*"
           },
           {
             Sid    = "S3MediaBucketList"

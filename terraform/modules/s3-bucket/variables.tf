@@ -3,8 +3,8 @@ variable "bucket_name" {
   type        = string
 
   validation {
-    condition     = can(regex("^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$", var.bucket_name))
-    error_message = "Bucket name must be between 3 and 63 characters, start and end with lowercase letter or number, and contain only lowercase letters, numbers, and hyphens."
+    condition     = can(regex("^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$", var.bucket_name)) && !can(regex("(--|\\.\\.)", var.bucket_name))
+    error_message = "Bucket name must be 3-63 characters, start and end with lowercase letter or number, contain only lowercase letters, numbers, hyphens, and dots, and must not have consecutive hyphens or dots."
   }
 }
 

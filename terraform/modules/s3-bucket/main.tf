@@ -61,6 +61,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "media" {
   bucket = aws_s3_bucket.media.id
 
   # Transition to Intelligent-Tiering after 0 days (immediate)
+  # Note: Intelligent-Tiering monitors object access patterns and automatically
+  # moves objects between access tiers. Setting days=0 is the AWS recommended
+  # practice as it allows immediate classification without additional costs.
   dynamic "rule" {
     for_each = var.enable_intelligent_tiering ? [1] : []
     content {
