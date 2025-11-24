@@ -20,6 +20,13 @@ spec:
         {{- include "media-stack.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: bazarr
     spec:
+      initContainers:
+      - name: create-media-dirs
+        image: busybox:latest
+        command: ['sh', '-c', 'mkdir -p /media/tv /media/movies && chmod 755 /media/tv /media/movies']
+        volumeMounts:
+        - name: media
+          mountPath: /media
       containers:
       - name: bazarr
         image: "{{ .Values.bazarr.image.repository }}:{{ .Values.bazarr.image.tag }}"

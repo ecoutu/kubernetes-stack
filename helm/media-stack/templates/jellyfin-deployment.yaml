@@ -20,6 +20,13 @@ spec:
         {{- include "media-stack.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: jellyfin
     spec:
+      initContainers:
+      - name: create-media-dirs
+        image: busybox:latest
+        command: ['sh', '-c', 'mkdir -p /media/tv /media/movies && chmod 755 /media/tv /media/movies']
+        volumeMounts:
+        - name: media
+          mountPath: /media
       containers:
       - name: jellyfin
         image: "{{ .Values.jellyfin.image.repository }}:{{ .Values.jellyfin.image.tag }}"

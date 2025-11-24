@@ -154,6 +154,7 @@ bazarr:
 4. Set download folder to `/downloads`
 
 ### 2. Sonarr Setup
+> **Note:** All applications currently share the same PersistentVolumeClaim (PVC) root. Each app mounts this PVC at a different path inside its container (e.g., `/tv`, `/movies`, or `/media`), but these are just different names for the same underlying storage. There are no enforced subdirectories for TV or movies unless you or the applications create them. This can lead to content organization issues if not managed carefully.
 
 1. Access Sonarr at port 30082
 2. Settings → Media Management → Root Folders → Add: `/tv`
