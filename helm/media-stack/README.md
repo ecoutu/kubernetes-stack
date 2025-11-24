@@ -154,12 +154,14 @@ bazarr:
 4. Set download folder to `/downloads`
 
 ### 2. Sonarr Setup
-> **Note:** All applications currently share the same PersistentVolumeClaim (PVC) root. Each app mounts this PVC at a different path inside its container (e.g., `/tv`, `/movies`, or `/media`), but these are just different names for the same underlying storage. There are no enforced subdirectories for TV or movies unless you or the applications create them. This can lead to content organization issues if not managed carefully.
+
+> **Note:** All applications share the same PersistentVolumeClaim (PVC) root. The chart automatically creates `tv` and `movies` subdirectories at startup using init containers. Each app then mounts specific subdirectories: Sonarr uses `/tv`, Radarr uses `/movies`, and Jellyfin can access both. This ensures proper content organization.
 
 1. Access Sonarr at port 30082
-2. Settings → Media Management → Root Folders → Add: `/tv`
-3. Settings → Download Clients → Add SABnzbd
-   - Host: `media-stack-sabnzbd` (service name)
+2. Complete the initial setup wizard
+3. Settings → Media Management → Root Folders → Add: `/tv`
+4. Settings → Download Clients → Add SABnzbd
+   - Host: `media-stack-sabnzbd`
    - Port: `8080`
 
 ### 3. Radarr Setup
@@ -183,16 +185,16 @@ bazarr:
 1. Access Jellyfin at port 30085
 2. Complete initial setup wizard
 3. Add media libraries:
-   - TV Shows: `/media` (or `/tv`)
-   - Movies: `/media` (or `/movies`)
+   - TV Shows: `/tv`
+   - Movies: `/movies`
 
 ## Volume Structure
 
 ```
 /config           # Application configuration (per-app)
 /downloads        # Shared downloads folder (SABnzbd output)
-/media or /tv     # TV shows (Sonarr, Jellyfin)
-/media or /movies # Movies (Radarr, Jellyfin)
+/tv               # TV shows (Sonarr, Jellyfin)
+/movies           # Movies (Radarr, Jellyfin)
 ```
 
 ## Upgrading
