@@ -1,6 +1,6 @@
 apiVersion: v2
 name: media-stack
-description: A complete media management stack with Sabnzbd, Sonarr, Radarr, Bazarr, and Jellyfin
+description: A complete media management stack with SABnzbd, Sonarr, Radarr, Bazarr, and Jellyfin
 type: application
 version: 0.1.0
 appVersion: "1.0.0"
