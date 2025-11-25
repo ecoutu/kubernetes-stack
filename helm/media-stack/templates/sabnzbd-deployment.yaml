@@ -20,6 +20,13 @@ spec:
         {{- include "media-stack.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: sabnzbd
     spec:
+      initContainers:
+      - name: create-download
+        image: busybox:latest
+        command: ['sh', '-c', 'mkdir -p /downloads/complete /downloads/incomplete && chmod 777 /downloads/complete /downloads/incomplete']
+        volumeMounts:
+        - name: downloads
+          mountPath: /downloads
       containers:
       - name: sabnzbd
         image: "{{ .Values.sabnzbd.image.repository }}:{{ .Values.sabnzbd.image.tag }}"

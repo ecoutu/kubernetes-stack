@@ -23,7 +23,7 @@ spec:
       initContainers:
       - name: create-media-dirs
         image: busybox:latest
-        command: ['sh', '-c', 'mkdir -p /media/tv /media/movies && chmod 755 /media/tv /media/movies']
+        command: ['sh', '-c', 'mkdir -p /media/tv /media/movies && chmod 777 /media/tv /media/movies']
         volumeMounts:
         - name: media
           mountPath: /media
