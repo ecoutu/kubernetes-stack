@@ -1,11 +1,10 @@
-{{- if .Values.metricsServer.enabled }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: metrics-server
   namespace: kube-system
   labels:
-    {{- include "media-stack.labels" . | nindent 4 }}
+    {{- include "metrics-server.labels" . | nindent 4 }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -15,7 +14,7 @@ metadata:
     rbac.authorization.k8s.io/aggregate-to-view: "true"
     rbac.authorization.k8s.io/aggregate-to-edit: "true"
     rbac.authorization.k8s.io/aggregate-to-admin: "true"
-    {{- include "media-stack.labels" . | nindent 4 }}
+    {{- include "metrics-server.labels" . | nindent 4 }}
 rules:
 - apiGroups: ["metrics.k8s.io"]
   resources: ["pods", "nodes"]
@@ -26,7 +25,7 @@ kind: ClusterRole
 metadata:
   name: system:metrics-server
   labels:
-    {{- include "media-stack.labels" . | nindent 4 }}
+    {{- include "metrics-server.labels" . | nindent 4 }}
 rules:
 - apiGroups:
   - ""
@@ -50,7 +49,7 @@ metadata:
   name: metrics-server-auth-reader
   namespace: kube-system
   labels:
-    {{- include "media-stack.labels" . | nindent 4 }}
+    {{- include "metrics-server.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -65,7 +64,7 @@ kind: ClusterRoleBinding
 metadata:
   name: metrics-server:system:auth-delegator
   labels:
-    {{- include "media-stack.labels" . | nindent 4 }}
+    {{- include "metrics-server.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -80,7 +79,7 @@ kind: ClusterRoleBinding
 metadata:
   name: system:metrics-server
   labels:
-    {{- include "media-stack.labels" . | nindent 4 }}
+    {{- include "metrics-server.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -96,7 +95,7 @@ metadata:
   name: metrics-server
   namespace: kube-system
   labels:
-    {{- include "media-stack.labels" . | nindent 4 }}
+    {{- include "metrics-server.labels" . | nindent 4 }}
     kubernetes.io/name: "Metrics-server"
     kubernetes.io/cluster-service: "true"
 spec:
@@ -114,7 +113,7 @@ metadata:
   namespace: kube-system
   labels:
     k8s-app: metrics-server
-    {{- include "media-stack.labels" . | nindent 4 }}
+    {{- include "metrics-server.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:
@@ -134,18 +133,18 @@ spec:
       priorityClassName: system-cluster-critical
       containers:
       - name: metrics-server
-        image: {{ .Values.metricsServer.image.repository }}:{{ .Values.metricsServer.image.tag }}
-        imagePullPolicy: {{ .Values.metricsServer.image.pullPolicy }}
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         args:
         - --cert-dir=/tmp
         - --secure-port=10250
         - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
         - --kubelet-use-node-status-port
         - --metric-resolution=15s
-        {{- if .Values.metricsServer.insecureTLS }}
+        {{- if .Values.insecureTLS }}
         - --kubelet-insecure-tls
         {{- end }}
-        {{- range .Values.metricsServer.extraArgs }}
+        {{- range .Values.extraArgs }}
         - {{ . }}
         {{- end }}
         ports:
@@ -168,7 +167,7 @@ spec:
           periodSeconds: 10
           failureThreshold: 3
         resources:
-          {{- toYaml (default .Values.global.resources .Values.metricsServer.resources) | nindent 10 }}
+          {{- toYaml .Values.resources | nindent 10 }}
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -190,14 +189,13 @@ kind: APIService
 metadata:
   name: v1beta1.metrics.k8s.io
   labels:
-    {{- include "media-stack.labels" . | nindent 4 }}
+    {{- include "metrics-server.labels" . | nindent 4 }}
 spec:
   service:
     name: metrics-server
     namespace: kube-system
   group: metrics.k8s.io
   version: v1beta1
-  insecureSkipTLSVerify: {{ .Values.metricsServer.insecureTLS }}
+  insecureSkipTLSVerify: {{ .Values.insecureTLS }}
   groupPriorityMinimum: 100
   versionPriority: 100
-{{- end }}
