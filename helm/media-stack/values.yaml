@@ -82,7 +82,7 @@ sabnzbd:
       cpu: 2000m
       memory: 2Gi
     requests:
-      cpu: 500m
+      cpu: 100m
       memory: 512Mi
 
 # Sonarr - TV show management
@@ -119,7 +119,7 @@ sonarr:
       cpu: 1000m
       memory: 1Gi
     requests:
-      cpu: 250m
+      cpu: 100m
       memory: 512Mi
 
 # Radarr - Movie management
@@ -156,7 +156,7 @@ radarr:
       cpu: 1000m
       memory: 1Gi
     requests:
-      cpu: 250m
+      cpu: 100m
       memory: 512Mi
 
 # Bazarr - Subtitle management
@@ -190,8 +190,8 @@ bazarr:
       cpu: 1000m
       memory: 1Gi
     requests:
-      cpu: 200m
-      memory: 512Mi
+      cpu: 50m
+      memory: 256Mi
 
 # Jellyfin - Media server
 jellyfin:
@@ -224,8 +224,8 @@ jellyfin:
 
   resources:
     limits:
-      cpu: 4000m
-      memory: 4Gi
+      cpu: 2000m
+      memory: 2Gi
     requests:
-      cpu: 1000m
-      memory: 1Gi
+      cpu: 100m
+      memory: 512Mi
