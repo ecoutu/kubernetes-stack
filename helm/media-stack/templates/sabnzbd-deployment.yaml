@@ -20,10 +20,12 @@ spec:
         {{- include "media-stack.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: sabnzbd
     spec:
+      securityContext:
+        fsGroup: 1000
       initContainers:
       - name: create-download
         image: busybox:latest
-        command: ['sh', '-c', 'mkdir -p /downloads/complete /downloads/incomplete && chmod 777 /downloads/complete /downloads/incomplete']
+        command: ['sh', '-c', 'mkdir -p /downloads/complete /downloads/incomplete && chmod 755 /downloads/complete /downloads/incomplete && chown 1000:1000 /downloads/complete /downloads/incomplete']
         volumeMounts:
         - name: downloads
           mountPath: /downloads

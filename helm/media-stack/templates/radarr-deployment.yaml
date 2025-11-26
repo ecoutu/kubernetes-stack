@@ -20,10 +20,12 @@ spec:
         {{- include "media-stack.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: radarr
     spec:
+      securityContext:
+        fsGroup: 1000
       initContainers:
       - name: create-media-dirs
         image: busybox:latest
-        command: ['sh', '-c', 'mkdir -p /media/tv /media/movies && chmod 777 /media/tv /media/movies']
+        command: ['sh', '-c', 'mkdir -p /media/movies && chmod 755 /media/movies && chown 1000:1000 /media/movies']
         volumeMounts:
         - name: media
           mountPath: /media

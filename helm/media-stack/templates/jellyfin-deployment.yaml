@@ -23,7 +23,7 @@ spec:
       initContainers:
       - name: create-media-dirs
         image: busybox:latest
-        command: ['sh', '-c', 'mkdir -p /media/tv /media/movies && chmod 777 /media/tv /media/movies']
+        command: ['sh', '-c', 'mkdir -p /media/tv /media/movies && chmod 755 /media/tv /media/movies && chown 1000:1000 /media/tv /media/movies']
         volumeMounts:
         - name: media
           mountPath: /media
@@ -49,6 +49,14 @@ spec:
           initialDelaySeconds: 60
           periodSeconds: 20
           failureThreshold: 6
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          capabilities:
+            drop:
+              - ALL
         env:
         - name: PUID
           value: {{ .Values.jellyfin.env.PUID | quote }}
