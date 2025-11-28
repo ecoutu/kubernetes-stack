@@ -115,6 +115,45 @@ data "aws_ami" "packer_minikube" {
   }
 }
 
+# Minikube IAM Role
+module "minikube_iam_role" {
+  source           = "./modules/iam-role"
+  role_name        = "${var.environment}-minikube-ec2-role"
+  role_description = "IAM role for Minikube EC2 instance"
+  trusted_services = ["ec2.amazonaws.com"]
+  managed_policy_arns = [
+    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+    "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+  ]
+
+  inline_policies = [
+    {
+      name = "AllowRoute53Access"
+      policy = jsonencode({
+        Version = "2012-10-17",
+        Statement = [
+          {
+            Effect = "Allow",
+            Action = [
+              "route53:ListHostedZones",
+              "route53:ListResourceRecordSets",
+              "route53:GetChange",
+              "route53:ChangeResourceRecordSets"
+            ],
+            Resource = "*"
+          }
+        ]
+      })
+    }
+  ]
+  create_instance_profile = true
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
+    Purpose     = "Minikube EC2 Instance"
+  }
+}
+
 # Minikube EC2 instance
 module "minikube" {
   source        = "./modules/ec2-instance"
@@ -142,6 +181,8 @@ module "minikube" {
       cidr_blocks = var.allowed_ssh_cidr_blocks
     }
   ]
+
+  iam_instance_profile = module.minikube_iam_role.instance_profile_name
 
   tags = {
     Environment = var.environment

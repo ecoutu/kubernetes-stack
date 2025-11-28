@@ -69,6 +69,11 @@ output "admin_role_instance_profile_name" {
   value       = module.iam.admin_instance_profile_name
 }
 
+output "letsencrypt_iam_role_arn" {
+  description = "IAM role ARN for letsencrypt pods (for kube2iam)"
+  value       = module.minikube_iam_role.role_arn
+}
+
 # Account Alias Output
 output "account_alias" {
   description = "AWS account alias for console sign-in"

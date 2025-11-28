@@ -115,3 +115,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "iam_instance_profile" {
+  description = "The name of the IAM instance profile to associate with the EC2 instance. If not set, no IAM role will be attached."
+  type        = string
+  default     = null
+}

@@ -123,6 +123,7 @@ module "instance" {
 | `root_block_device_volume_type` | Root volume type | `string` | `"gp3"` | no |
 | `enable_monitoring` | Enable detailed monitoring | `bool` | `false` | no |
 | `tags` | Additional tags | `map(string)` | `{}` | no |
+| `iam_instance_profile` | The name of the IAM instance profile to associate with the EC2 instance. If not set, no IAM role will be attached. | `string` | `null` | no |
 
 ## Outputs
 
@@ -135,6 +136,20 @@ module "instance" {
 | `private_dns` | Private DNS name |
 | `security_group_id` | Security group ID |
 | `ami_id` | AMI ID used |
+
+
+### Example with IAM Role
+
+```hcl
+module "instance_with_iam" {
+  source = "./modules/ec2-instance"
+  name_prefix = "iam-instance"
+  subnet_ids  = ["subnet-abc123"]
+  vpc_id      = "vpc-xyz789"
+  iam_instance_profile = "my-iam-instance-profile" # Name of your IAM instance profile
+  # ... other variables ...
+}
+```
 
 ## Notes
 
