@@ -358,10 +358,218 @@ module "route53" {
       records = [module.minikube.private_ip]
       zone    = "private"
     }
+    protonmail_domainkey = {
+      name    = "protonmail._domainkey.${var.domain_name}"
+      type    = "CNAME"
+      ttl     = 300
+      records = ["protonmail.domainkey.dutezptpeu2j7rgbl2gex46bkv25sm6ve3nfufkg22u562b7niwbq.domains.proton.ch."]
+      zone    = "public"
+    }
+    protonmail2_domainkey = {
+      name    = "protonmail2._domainkey.${var.domain_name}"
+      type    = "CNAME"
+      ttl     = 300
+      records = ["protonmail2.domainkey.dutezptpeu2j7rgbl2gex46bkv25sm6ve3nfufkg22u562b7niwbq.domains.proton.ch."]
+      zone    = "public"
+    }
+    protonmail3_domainkey = {
+      name    = "protonmail3._domainkey.${var.domain_name}"
+      type    = "CNAME"
+      ttl     = 300
+      records = ["protonmail3.domainkey.dutezptpeu2j7rgbl2gex46bkv25sm6ve3nfufkg22u562b7niwbq.domains.proton.ch."]
+      zone    = "public"
+    }
+    mx_records = {
+      name    = var.domain_name
+      type    = "MX"
+      ttl     = 300
+      records = ["10 mail.protonmail.ch.", "20 mailsec.protonmail.ch."]
+      zone    = "public"
+    }
+    txt_apex = {
+      name = var.domain_name
+      type = "TXT"
+      ttl  = 300
+      records = [
+        "protonmail-verification=06c5fe1f46fc22c2ab6c9a7967cbf32aec22620c",
+        "v=spf1 include:_spf.protonmail.ch ~all"
+      ]
+      zone = "public"
+    }
+    txt_dmarc = {
+      name    = "_dmarc.${var.domain_name}"
+      type    = "TXT"
+      ttl     = 300
+      records = ["v=DMARC1; p=quarantine"]
+      zone    = "public"
+    }
   }
 
   tags = {
     Environment = var.environment
     Project     = var.project_name
+  }
+}
+
+# Route53 Hosted Zones for ecoutu.io
+module "route53_ecoutu_io" {
+  source = "./modules/route53"
+
+  domain_name         = "ecoutu.io"
+  create_public_zone  = true
+  create_private_zone = true
+  vpc_id              = module.vpc.vpc_id
+
+  dns_records = {
+    minikube_public = {
+      name    = "minikube.ecoutu.io"
+      type    = "A"
+      ttl     = 300
+      records = [module.minikube.public_ip]
+      zone    = "public"
+    }
+    minikube_private = {
+      name    = "minikube.ecoutu.io"
+      type    = "A"
+      ttl     = 300
+      records = [module.minikube.private_ip]
+      zone    = "private"
+    }
+    home = {
+      name    = "home.ecoutu.io"
+      type    = "A"
+      ttl     = 180
+      records = ["174.93.229.191", "142.170.59.154"]
+      zone    = "public"
+    }
+    protonmail_domainkey = {
+      name    = "protonmail._domainkey.ecoutu.io"
+      type    = "CNAME"
+      ttl     = 300
+      records = ["protonmail.domainkey.d2oqpc6vgtu4mzhgi35sco53thuw5i4klvb6xly5xfyeemdgyniaq.domains.proton.ch."]
+      zone    = "public"
+    }
+    protonmail2_domainkey = {
+      name    = "protonmail2._domainkey.ecoutu.io"
+      type    = "CNAME"
+      ttl     = 300
+      records = ["protonmail2.domainkey.d2oqpc6vgtu4mzhgi35sco53thuw5i4klvb6xly5xfyeemdgyniaq.domains.proton.ch."]
+      zone    = "public"
+    }
+    protonmail3_domainkey = {
+      name    = "protonmail3._domainkey.ecoutu.io"
+      type    = "CNAME"
+      ttl     = 300
+      records = ["protonmail3.domainkey.d2oqpc6vgtu4mzhgi35sco53thuw5i4klvb6xly5xfyeemdgyniaq.domains.proton.ch."]
+      zone    = "public"
+    }
+    mx_records = {
+      name    = "ecoutu.io"
+      type    = "MX"
+      ttl     = 300
+      records = ["10 mail.protonmail.ch.", "20 mailsec.protonmail.ch."]
+      zone    = "public"
+    }
+    txt_apex = {
+      name = "ecoutu.io"
+      type = "TXT"
+      ttl  = 300
+      records = [
+        "protonmail-verification=2847a4294206ddcc9dc802fb8d610192858b022e",
+        "v=spf1 include:_spf.protonmail.ch ~all"
+      ]
+      zone = "public"
+    }
+    txt_dmarc = {
+      name    = "_dmarc.ecoutu.io"
+      type    = "TXT"
+      ttl     = 300
+      records = ["v=DMARC1; p=quarantine"]
+      zone    = "public"
+    }
+  }
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
+    Domain      = "ecoutu.io"
+  }
+}
+
+# Route53 Hosted Zones for coutu.io
+module "route53_coutu_io" {
+  source = "./modules/route53"
+
+  domain_name         = "coutu.io"
+  create_public_zone  = true
+  create_private_zone = true
+  vpc_id              = module.vpc.vpc_id
+
+  dns_records = {
+    minikube_public = {
+      name    = "minikube.coutu.io"
+      type    = "A"
+      ttl     = 300
+      records = [module.minikube.public_ip]
+      zone    = "public"
+    }
+    minikube_private = {
+      name    = "minikube.coutu.io"
+      type    = "A"
+      ttl     = 300
+      records = [module.minikube.private_ip]
+      zone    = "private"
+    }
+    protonmail_domainkey = {
+      name    = "protonmail._domainkey.coutu.io"
+      type    = "CNAME"
+      ttl     = 300
+      records = ["protonmail.domainkey.doxd3myjpctefluhfsu2gm2sh2wsdauqac3zolucr2qqanjrf76aa.domains.proton.ch."]
+      zone    = "public"
+    }
+    protonmail2_domainkey = {
+      name    = "protonmail2._domainkey.coutu.io"
+      type    = "CNAME"
+      ttl     = 300
+      records = ["protonmail2.domainkey.doxd3myjpctefluhfsu2gm2sh2wsdauqac3zolucr2qqanjrf76aa.domains.proton.ch."]
+      zone    = "public"
+    }
+    protonmail3_domainkey = {
+      name    = "protonmail3._domainkey.coutu.io"
+      type    = "CNAME"
+      ttl     = 300
+      records = ["protonmail3.domainkey.doxd3myjpctefluhfsu2gm2sh2wsdauqac3zolucr2qqanjrf76aa.domains.proton.ch."]
+      zone    = "public"
+    }
+    mx_records = {
+      name    = "coutu.io"
+      type    = "MX"
+      ttl     = 300
+      records = ["10 mail.protonmail.ch.", "20 mailsec.protonmail.ch."]
+      zone    = "public"
+    }
+    txt_apex = {
+      name = "coutu.io"
+      type = "TXT"
+      ttl  = 300
+      records = [
+        "protonmail-verification=6c6095c94c2d29d5b44a7f984df61aa921e7a243",
+        "v=spf1 include:_spf.protonmail.ch ~all"
+      ]
+      zone = "public"
+    }
+    txt_dmarc = {
+      name    = "_dmarc.coutu.io"
+      type    = "TXT"
+      ttl     = 300
+      records = ["v=DMARC1; p=quarantine"]
+      zone    = "public"
+    }
+  }
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
+    Domain      = "coutu.io"
   }
 }

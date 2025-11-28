@@ -213,3 +213,55 @@ output "minikube_private_fqdn" {
   description = "The private fully qualified domain name for the minikube instance"
   value       = module.route53.private_record_fqdns["minikube_private"]
 }
+
+# Route53 Outputs for ecoutu.io
+output "route53_ecoutu_io_public_zone_id" {
+  description = "The hosted zone ID of the public Route53 zone for ecoutu.io"
+  value       = module.route53_ecoutu_io.public_zone_id
+}
+
+output "route53_ecoutu_io_public_name_servers" {
+  description = "The name servers for the public hosted zone for ecoutu.io (configure these with your domain registrar)"
+  value       = module.route53_ecoutu_io.public_name_servers
+}
+
+output "route53_ecoutu_io_private_zone_id" {
+  description = "The hosted zone ID of the private Route53 zone for ecoutu.io"
+  value       = module.route53_ecoutu_io.private_zone_id
+}
+
+output "route53_ecoutu_io_public_record_fqdns" {
+  description = "Map of public DNS record FQDNs for ecoutu.io"
+  value       = module.route53_ecoutu_io.public_record_fqdns
+}
+
+output "route53_ecoutu_io_private_record_fqdns" {
+  description = "Map of private DNS record FQDNs for ecoutu.io"
+  value       = module.route53_ecoutu_io.private_record_fqdns
+}
+
+# Route53 Outputs for coutu.io
+output "route53_coutu_io_public_zone_id" {
+  description = "The hosted zone ID of the public Route53 zone for coutu.io"
+  value       = module.route53_coutu_io.public_zone_id
+}
+
+output "route53_coutu_io_public_name_servers" {
+  description = "The name servers for the public hosted zone for coutu.io (configure these with your domain registrar)"
+  value       = module.route53_coutu_io.public_name_servers
+}
+
+output "route53_coutu_io_private_zone_id" {
+  description = "The hosted zone ID of the private Route53 zone for coutu.io"
+  value       = module.route53_coutu_io.private_zone_id
+}
+
+output "route53_coutu_io_public_record_fqdns" {
+  description = "Map of public DNS record FQDNs for coutu.io"
+  value       = module.route53_coutu_io.public_record_fqdns
+}
+
+output "route53_coutu_io_private_record_fqdns" {
+  description = "Map of private DNS record FQDNs for coutu.io"
+  value       = module.route53_coutu_io.private_record_fqdns
+}
