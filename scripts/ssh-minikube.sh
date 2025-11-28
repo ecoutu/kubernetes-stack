@@ -236,7 +236,7 @@ main() {
         local local_port="${port%%:*}"
         local remote_port="${port##*:}"
         echo "  localhost:${local_port} → minikube:${remote_port}"
-        ssh_cmd="$ssh_cmd -L ${local_port}:192.168.49.2:${remote_port}"
+        ssh_cmd="$ssh_cmd -L ${local_port}:localhost:${remote_port}"
     done
     echo ""
 
@@ -258,7 +258,7 @@ main() {
             local local_port="${port%%:*}"
             local remote_port="${port##*:}"
             echo "  localhost:${local_port} → minikube:${remote_port}"
-            ssh_cmd="$ssh_cmd -L ${local_port}:192.168.49.2:${remote_port}"
+            ssh_cmd="$ssh_cmd -L ${local_port}:localhost:${remote_port}"
         done
         echo ""
     fi
